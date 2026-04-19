@@ -87,7 +87,7 @@ def dm04_iris_evaluate_test():
     iris_data = load_iris()
     # 2. 数据的预处理, 这里是把150条数据, 按照 8:2的比例, 切分训练集和测试集.
     x_train, x_test, y_train, y_test = train_test_split(iris_data.data, iris_data.target, test_size=0.2,
-                                                        random_state=23)
+                                                        random_state=42)
 
     # 3. 特征工程(提取, 预处理...)
     # 思考1: 特征提取: 因为源数据只有4个特征列, 且都是我们用的, 所以这里无需做特征提取.
@@ -115,23 +115,23 @@ def dm04_iris_evaluate_test():
 
     # 场景2: 对新的数据集(源数据150条 之外的数据) 进行测试.
     # 5.1 自定义测试数据集.
-    # my_data = [[7.8, 2.1, 3.9, 1.6]]
+    my_data = [[7.8, 2.1, 3.9, 1.6]]
     # 5.2 对数据集进行标准化处理.
-    # my_data = transfer.transform(my_data)
+    my_data = transfer.transform(my_data)
     # 5.3 模型预测.
-    # y_pre_new = estimator.predict(my_data)
-    # print(f'预测值为: {y_pre_new}')
+    y_pre_new = estimator.predict(my_data)
+    print(f'新数据集预测值为: {y_pre_new}')
 
     # 5.4 查看上述数据集, 每种分类的预测概率.
-    # y_pre_proba = estimator.predict_proba(my_data)
-    # print(f'(各分类)预测概率为: {y_pre_proba}')  # [[0, 0.66666667, 0.33333333]] -> 0分类的概率, 1分类的概率, 2分类的概率.
+    y_pre_proba = estimator.predict_proba(my_data)
+    print(f'(各分类)预测概率为: {y_pre_proba}')  # [[0, 0.66666667, 0.33333333]] -> 0分类的概率, 1分类的概率, 2分类的概率.
 
     # 6. 模型评估.
     # 方式1: 直接评分, 基于: 测试集的特征 和 测试集集的标签.
-    # print(f'正确率(准确率): {estimator.score(x_test, y_test)}')  # 0.9666666666666667
+    print(f'正确率(准确率): {estimator.score(x_test, y_test)}')  # 0.9666666666666667
 
-    # 方式2: 基于 测试集的标签 和 预测结果 进行评分.
-    # print(f'正确率(准确率): {accuracy_score(y_test, y_pre)}')  # 0.9666666666666667
+    # 方式2: 基于 测试集的标签 和 预测出来的标签 进行评分.
+    print(f'正确率(准确率): {accuracy_score(y_test, y_pre)}')  # 0.9666666666666667
 
 
 # 5. 测试.
