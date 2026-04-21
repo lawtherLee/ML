@@ -39,7 +39,7 @@ venv.bak/
 *.weights
 checkpoints/
 models/
-data/
+KNN算法/data/
 datasets/
 
 # IDE
