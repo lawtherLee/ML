@@ -3,9 +3,7 @@
   <component name="Black">
     <option name="enabledOnSave" value="true" />
     <option name="pathToExecutable" value="D:\anaconda3\Scripts\black.exe" />
-    <option name="enabledOnSave" value="true" />
-    <option name="pathToExecutable" value="/opt/anaconda3/bin/black" />
-    <option name="sdkName" value="/opt/anaconda3" />
+    <option name="sdkName" value="D:\anaconda3" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (ML)" project-jdk-type="Python SDK" />
 </project>
