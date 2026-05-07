@@ -28,20 +28,20 @@ from sklearn.model_selection import train_test_split
 def dm01_数据预处理():
     # 1. 读取数据.
     data = pd.read_csv("./data/churn.csv")
-    data.info()
-    print(data.head())
+    # data.info()
+    # print(data.head())
 
     # 2. 因为上述的Churn, gender是字符串类型, 我们对其做热编码(one-hot)处理.
     data = pd.get_dummies(data)
-    data.info()
-    print(data.head())
+    # data.info()
+    # print(data.head())
 
     # 3. 删除列, 因为热编码之后, 会多出一个列, 我们删除掉.
-    # data.drop(["gender_Male", "Churn_No"], axis=1, inplace=True)
+    data.drop(["gender_Male", "Churn_No"], axis=1, inplace=True)
     # print(data.head(10))
 
     # 4. 修改列名.
-    # data.rename(columns={"Churn_Yes": "flag"}, inplace=True)
+    data.rename(columns={"Churn_Yes": "flag"}, inplace=True)
     # print(data.head(10))
 
     # 5. 我们查看下数据集中, 标签 是否是 均衡的.
@@ -99,7 +99,7 @@ def dm03_逻辑回归模型训练评估():
 
     # 8. 模型预测.
     y_predict = estimator.predict(x_test)
-    print(f"预测值为: {y_predict}")
+    # print(f"预测值为: {y_predict}")
 
     # 9. 模型评估.
     # 9.1 准确率.
@@ -129,6 +129,6 @@ def dm03_逻辑回归模型训练评估():
 
 # 4. 在main函数中测试.
 if __name__ == "__main__":
-    dm01_数据预处理()
+    # dm01_数据预处理()
     # dm02_会员流失可视化情况()
-    # dm03_逻辑回归模型训练评估()
+    dm03_逻辑回归模型训练评估()
