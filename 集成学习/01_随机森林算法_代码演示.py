@@ -60,8 +60,8 @@ estimator1 = DecisionTreeClassifier()
 # 4.2 模型训练.
 estimator1.fit(x_train, y_train)
 # 4.3 预测.
-y_pred = estimator1.predict(x_test)
-print(f"预测值为: {y_pred}")
+# y_pred = estimator1.predict(x_test)
+# print(f"预测值为: {y_pred}")
 # 4.4 评估.
 print(
     f"决策树模型的准确率为: {estimator1.score(x_test, y_test)}"
@@ -74,8 +74,8 @@ estimator2 = RandomForestClassifier()  # n_estimators=100, max_depth=None
 # 4.2 模型训练.
 estimator2.fit(x_train, y_train)
 # 4.3 预测.
-y_pred2 = estimator2.predict(x_test)
-print(f"预测值为: {y_pred2}")
+# y_pred2 = estimator2.predict(x_test)
+# print(f"预测值为: {y_pred2}")
 # 4.4 评估
 print(f"随机森林模型的准确率为: {estimator2.score(x_test, y_test)}")
 print("-" * 23)
@@ -83,7 +83,8 @@ print("-" * 23)
 
 # 场景3: 随机森林算法 -> 采用网格搜索.
 # 4.1 创建 随机森林对象, 演示: 多个的决策树(Bagging思想)效果.
-estimator3 = RandomForestClassifier()
+estimator3 = RandomForestClassifier(n_estimators=50, max_depth=5)
+estimator3.fit(x_train, y_train)
 # 4.2 参数准备.
 params = {"n_estimators": [30, 50, 60, 90, 110], "max_depth": [2, 3, 5, 7]}
 # 4.3 创建网格搜索对象 结合 交叉验证.
@@ -91,8 +92,8 @@ gs_estimator = GridSearchCV(estimator3, param_grid=params, cv=2)
 # 4.4 模型训练.
 gs_estimator.fit(x_train, y_train)
 # 4.5 预测.
-y_pred3 = gs_estimator.predict(x_test)
-print(f"预测值为: {y_pred3}")
+# y_pred3 = gs_estimator.predict(x_test)
+# print(f"预测值为: {y_pred3}")
 # 4.6 评估
 print(f"随机森林模型的准确率为: {gs_estimator.score(x_test, y_test)}")
 # 4.7 获取 最佳参数.
