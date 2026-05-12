@@ -39,7 +39,7 @@ def dm01_data_split():
     # 4. 查看数据.
     # print(x[:5])
     # print(y[:5])
-    # print(f"查看 标签结果的分布情况, 是否均衡: {Counter(y)}")
+    print(f"查看 标签结果的分布情况, 是否均衡: {Counter(y)}")
     # 5. 切分 训练集和测试集.
     # 参1: 特征数据. 参2: 标签数据. 参3: 测试集的比例. 参4: 随机种子. 参5: 参考数据集的标签分布.
     x_train, x_test, y_train, y_test = train_test_split(

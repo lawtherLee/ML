@@ -45,7 +45,7 @@ y = df_wine["Class label"]  # 标签列.
 # print(x[:5])
 # print(y[:5])
 
-# 2.4 通过 标签编码器, 把 标签列, 转换为 数值列.
+# 2.4 通过 标签编码器, 把 标签列, 转换为 数值列. 这玩意能去重
 le = LabelEncoder()
 y = le.fit_transform(y)
 # print(y)      # [2, 3] -> [0, 1]
