@@ -110,12 +110,34 @@ def feature_engineering(data, logger):
     :param logger: 日志
     :return:
     """
+
+    _data = data.copy()
+    _data["time"] = pd.to_datetime(_data["time"])
     # 1. 提取出时间特征：小时、月份
+    _data["hour"] = _data["time"].dt.hour
+    _data["month"] = _data["time"].dt.month
+    # 转换为字符串格式（补零），再进行 one-hot 编码
+    _data["hour"] = _data["hour"].apply(lambda x: f"{x:02d}")
+    _data["month"] = _data["month"].apply(lambda x: f"{x:02d}")
+    # 热编码处理
+    _data = pd.get_dummies(_data, columns=["hour", "month"])
     # 2. 提取出相近时间窗口中的负荷特征：step大小窗口的负荷
+    for i in range(1, 4):
+        _data[f"前{i}小时"] = _data["power_load"].shift(i)
     # 3. 提取昨日同时刻负荷特征
+    # 3.1 给特征新增1列名 yesterday_time
+    _data["yesterday_time"] = _data["time"] - pd.to_timedelta("1d")
+    # 3.2 把所有的时间和负荷拼成字典
+    time_load_dict = dict(zip(_data["time"].dt.strftime("%Y-%m-%d %H:%M:%S"), _data["power_load"]))
+    # 3.3 新增1列 yesterday_load 表示昨天同一时刻的负荷
+    _data["yesterday_load"] = _data["yesterday_time"].apply(lambda x: time_load_dict.get(x.strftime("%Y-%m-%d %H:%M:%S")))
     # 4. 剔除出现空值的样本
+    _data.dropna(inplace=True)
     # 5. 整理时间特征，并返回
-    pass
+    hour_columns = [col for col in _data.columns if "hour_" in col]
+    month_columns = [col for col in _data.columns if "month_" in col]
+    feature_columns = list(hour_columns + month_columns + ["前1小时", "前2小时", "前3小时", "yesterday_load"])
+    return _data, feature_columns
 
 
 # 5. 模型训练, 评估
@@ -123,4 +145,5 @@ def feature_engineering(data, logger):
 if __name__ == "__main__":
     plm = PowerLoadModel()
     # ana_data(plm.data_source)
-    feature_engineering(plm.data_source, plm.logfile)
+    data, feature_col = feature_engineering(plm.data_source, plm.logfile)
+    print(data.head(), feature_col)

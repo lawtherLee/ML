@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/南方电网电力负荷预测" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="/opt/anaconda3" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="D:\anaconda3" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
