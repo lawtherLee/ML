@@ -3,12 +3,20 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+
+import xgboost
+
 from utils.log import Logger
 from utils.common import data_preprocessing
 from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_error,
+    root_mean_squared_error,
+    mean_absolute_percentage_error,
+)
 import joblib
 
 plt.rcParams["font.size"] = 15
@@ -24,7 +32,7 @@ class PowerLoadModel:
         # 1.3 创建日志对象
         self.logfile = Logger("../", log_name=logfile_name).get_logger()
         # 1.4 获取数据源
-        self.data_source = data_preprocessing()
+        self.data_source = data_preprocessing("../data/train.csv")
 
 
 # 2. 查看数据的整体分布情况(数据分析)
@@ -128,16 +136,81 @@ def feature_engineering(data, logger):
     # 3.1 给特征新增1列名 yesterday_time
     _data["yesterday_time"] = _data["time"] - pd.to_timedelta("1d")
     # 3.2 把所有的时间和负荷拼成字典
-    time_load_dict = dict(zip(_data["time"].dt.strftime("%Y-%m-%d %H:%M:%S"), _data["power_load"]))
+    time_load_dict = dict(
+        zip(_data["time"].dt.strftime("%Y-%m-%d %H:%M:%S"), _data["power_load"])
+    )
     # 3.3 新增1列 yesterday_load 表示昨天同一时刻的负荷
-    _data["yesterday_load"] = _data["yesterday_time"].apply(lambda x: time_load_dict.get(x.strftime("%Y-%m-%d %H:%M:%S")))
+    _data["yesterday_load"] = _data["yesterday_time"].apply(
+        lambda x: time_load_dict.get(x.strftime("%Y-%m-%d %H:%M:%S"))
+    )
     # 4. 剔除出现空值的样本
     _data.dropna(inplace=True)
     # 5. 整理时间特征，并返回
     hour_columns = [col for col in _data.columns if "hour_" in col]
     month_columns = [col for col in _data.columns if "month_" in col]
-    feature_columns = list(hour_columns + month_columns + ["前1小时", "前2小时", "前3小时", "yesterday_load"])
+    feature_columns = list(
+        hour_columns
+        + month_columns
+        + ["前1小时", "前2小时", "前3小时", "yesterday_load"]
+    )
     return _data, feature_columns
+
+
+# 4. 模型训练, 评估, 保存
+def model_train(data, features, logger):
+    """
+    1.数据集切分
+    2.网格化搜索与交叉验证
+    3.模型实例化
+    4.模型训练
+    5.模型评价
+    6.模型保存
+    :param data: 特征工程处理后的输入数据
+    :param features: 特征名称
+    :param logger: 日志对象
+    :return:
+    """
+    # 1.数据集切分
+    x = data[features]
+    y = data["power_load"]
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.2, random_state=42
+    )
+    # 2.网格化搜索与交叉验证
+    """
+    logger.info("------网格化搜索与交叉验证 寻找最优超参------")
+    logger.info(f"开始时间:{datetime.datetime.now()}")
+    # 2.1 定义超参字典
+    param_grid = {
+        "n_estimators": [100, 200, 300, 400, 500],
+        "max_depth": [3, 5, 7, 9, 11],
+        "learning_rate": [0.01, 0.05, 0.1, 0.2, 0.3],
+    }
+    # 2.2 创建XGBoost 模型对象
+    estimator = XGBRegressor()
+    # 2.3 创建网格搜索对象
+    gs = GridSearchCV(estimator, param_grid, cv=5)
+    # 2.4 模型训练
+    gs.fit(x_train, y_train)
+    # 2.5 打印最优参数
+    logger.info(f"最优参数:{gs.best_params_}")
+    logger.info(f"结束时间:{datetime.datetime.now()}")
+    """
+    # 3.模型实例化
+    estimator = XGBRegressor(
+        n_estimators=500, max_depth=5, learning_rate=0.05, random_state=42
+    )
+    # 4.模型训练
+    estimator.fit(x_train, y_train)
+    y_pred = estimator.predict(x_test)
+    # 5.模型评价
+    print(f"均方误差: {mean_squared_error(y_test, y_pred)}")
+    print(f"均方根误差: {root_mean_squared_error(y_test, y_pred)}")
+    print(f"平均绝对误差: {mean_absolute_error(y_test, y_pred)}")
+    print(f"平均绝对百分比误差: {mean_absolute_percentage_error(y_test, y_pred)}")
+    # 6.模型保存
+    joblib.dump(estimator, "../model/xgb_20260515.pkl")
+    logger.info("模型保存成功！../model/xgb_20260515.pkl")
 
 
 # 5. 模型训练, 评估
@@ -146,4 +219,4 @@ if __name__ == "__main__":
     plm = PowerLoadModel()
     # ana_data(plm.data_source)
     data, feature_col = feature_engineering(plm.data_source, plm.logfile)
-    print(data.head(), feature_col)
+    model_train(data, feature_col, plm.logfile)
