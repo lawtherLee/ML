@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import datetime
 
 import pandas as pd
+from scipy.spatial.transform import rotation
+from sklearn.metrics import mean_absolute_error
 
 from utils.common import data_preprocessing
 from utils.log import Logger
@@ -113,6 +115,45 @@ def pred_feature_extract(data_dict, time, logger):
         for h in [1, 2, 3]
     ]
     # 3. 解析昨日同时刻特征
+    yesterday_time = (pd.to_datetime(time) - pd.to_timedelta("1d")).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    yesterday_load = data_dict.get(yesterday_time, 500)
+
+    # 4. 拼接特征数据
+    feature_data = (
+        hour_list
+        + month_list
+        + [last_1h_load, last_2h_load, last_3h_load, yesterday_load]
+    )
+
+    feature_data = pd.DataFrame([feature_data], columns=feature_names)
+    return feature_data
+
+
+# 3. 绘制时间与预测负荷折线图，时间与真实负荷折线图，展示预测效果
+def prediction_plot(data):
+    """
+    绘制时间与预测负荷折线图，时间与真实负荷折线图，展示预测效果
+    :param data: 数据一共有三列：时间、真实值、预测值
+    :return:
+    """
+    # 1. 创建画布
+    fig = plt.figure(figsize=(80, 40))
+    # 2. 创建子图
+    ax = fig.add_subplot()
+    # 3. 绘制折线图
+    ax.plot(data["预测时间"], data["真实负荷"], label="真实负荷")
+    ax.plot(data["预测时间"], data["预测负荷"], label="预测负荷")
+    ax.set_title("时间与预测负荷折线图")
+    ax.set_xlabel("时间")
+    ax.set_ylabel("负荷")
+    ax.legend()
+    # 设置刻度间隔 以及标签旋转
+    ax.xaxis.set_major_locator(plt.MultipleLocator(20))
+    plt.xticks(rotation=45)
+    plt.savefig("../data/fig/真实负荷和预测负荷关系图")
+    plt.show()
 
 
 # 4. 测试
@@ -126,15 +167,35 @@ if __name__ == "__main__":
         plp.data_source["time"] >= "2015-08-01 00:00:00"
     ]
     # 4.4 为了模拟实际场景的预测，把要预测的时间以及以后的负荷都掩盖掉，因此新建一个数据字典，只保存预测时间以前的数据字典
+    evaluate_list = []
     for pred_time in pred_times:
-        print(f"正在预测时间：{pred_time}所对应的负荷...")
+        # 4.5 预测负荷
+        # print(f"正在预测时间：{pred_time}所对应的负荷...")
+        plp.logger.info(f"正在预测时间：{pred_time}所对应的负荷...")
         time_load_dict_masked = {
             k: v for k, v in plp.time_load_dict.items() if k < pred_time
         }
-        pred_feature_extract(time_load_dict_masked, pred_time, plp.logger)
-    # 4.5 预测负荷
-    # 4.5.1 解析特征（定义解析特征方法）
-    # 4.5.2 利用加载的模型预测
-    # 4.6 保存预测时间对应的真实负荷
-    # 4.7 结果保存到evaluate_list，三个元素分别是预测时间、真实负荷、预测负荷，方便后续进行预测结果评价
+        # 4.5.1 解析特征（定义解析特征方法）
+        feature_df = pred_feature_extract(time_load_dict_masked, pred_time, plp.logger)
+        # 4.5.2 利用加载的模型预测
+        pred_load = estimator.predict(feature_df)
+        # print(f"预测时间：{pred_time}所对应的负荷为：{pred_load}")
+
+        # 4.6 保存预测时间对应的真实负荷
+        true_value = plp.time_load_dict.get(pred_time, 500)
+        # 4.7 结果保存到evaluate_list，三个元素分别是预测时间、真实负荷、预测负荷，方便后续进行预测结果评价
+        evaluate_list.append([pred_time, true_value, pred_load[0]])
+        plp.logger.info(
+            f"预测时间：{pred_time}所对应的真实负荷为：{true_value}, 预测负荷为：{pred_load[0]}"
+        )
     # 4.8 循环结束后，evaluate_list转为DataFrame
+    evaluate_list = pd.DataFrame(
+        evaluate_list, columns=["预测时间", "真实负荷", "预测负荷"]
+    )
+    # 5.预测结果评价
+    # 5.1 计算预测结果与真实结果的MAE
+    print(
+        f"平均绝对误差为: {mean_absolute_error(evaluate_list["真实负荷"], evaluate_list["预测负荷"])}"
+    )
+    # 5.2 绘制折线图（预测时间-真实负荷折线图，预测时间-预测负荷折线图），查看预测效果
+    prediction_plot(evaluate_list)
